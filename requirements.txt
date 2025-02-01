@@ -6,3 +6,5 @@ google-generativeai
 faiss-cpu
 speechrecognition
 pyttsx3 
+langchain-google-genai
+
