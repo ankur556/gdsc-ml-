@@ -8,6 +8,7 @@ speechrecognition
 pyttsx3 
 langchain-google-genai
 openai
+langchain-community
 
 
 
