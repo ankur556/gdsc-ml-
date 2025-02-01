@@ -1,7 +1,7 @@
-echo "streamlit
+echo streamlit
 PyPDF2
 langchain
 google-generativeai
 faiss-cpu
 speechrecognition
-pyttsx3" > requirements.txt
+pyttsx3 > requirements.txt
