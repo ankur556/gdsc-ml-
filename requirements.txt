@@ -1,0 +1,7 @@
+echo "streamlit
+PyPDF2
+langchain
+google-generativeai
+faiss-cpu
+speechrecognition
+pyttsx3" > requirements.txt
