@@ -75,5 +75,5 @@ def split_text(text: str, chunk_size: int = 500):
     return chunks
 
 import chromadb
-from chromadb.utils import
+from chromadb.utils import embendings_functions
 
