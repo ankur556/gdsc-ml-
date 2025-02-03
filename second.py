@@ -1,3 +1,5 @@
+import os
+os.system("pip install -r requirements.txt")
 import docx
 import PyPDF2
 def read_text_file(file path: str): #read content from a text file given in input by the user
