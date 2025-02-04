@@ -10,7 +10,7 @@ langchain-google-genai
 openai
 langchain-community
 openai
-chromadb
+chromadb==0.4.22
 duckdb
 sqlite
 pysqlite3
