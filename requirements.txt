@@ -15,4 +15,3 @@ duckdb
 sqlite
 pysqlite3
 tiktoken
-sqlite
