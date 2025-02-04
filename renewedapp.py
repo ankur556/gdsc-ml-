@@ -1,4 +1,5 @@
 import os
+os.system("pip install -r requirements.txt")
 import shutil
 import openai
 import chromadb
