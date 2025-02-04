@@ -1,4 +1,12 @@
 import os
+
+import sqlite3
+import subprocess
+
+# Upgrade SQLite
+subprocess.run(["pip", "install", "--upgrade", "sqlite-utils"])
+
+
 import openai
 import chromadb
 from docx import Document
