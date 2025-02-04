@@ -7,6 +7,19 @@ import speech_recognition as sr
 import streamlit as st
 from chromadb.utils import embedding_functions
 
+import shutil
+
+chromadb_path = "Chromadb"
+
+if os.path.exists(chromadb_path):
+    shutil.rmtree(chromadb_path)  # Delete the folder
+
+import chromadb  # Import ChromaDB after cleanup
+
+# Recreate the persistent database
+client = chromadb.PersistentClient(path=chromadb_path)
+
+
 # --- Setup ---
 st.title("💬 Document-Based Chatbot with Voice & Text")
 st.write("This chatbot can search and process documents, as well as take voice or text inputs.")
