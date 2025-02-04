@@ -8,6 +8,13 @@ import speech_recognition as sr
 import streamlit as st
 from chromadb.utils import embedding_functions
 
+import chromadb
+
+client = chromadb.Client()
+collection = client.get_collection(name="chroma_docs")
+results = collection.get(ids=["page"])["documents"]
+print(results) # Not found []
+
 chromadb_path = "Chromadb"
 
 if os.path.exists(chromadb_path):
