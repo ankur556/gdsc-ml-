@@ -1,3 +1,6 @@
+python==3.10
+numpy==1.23.5
+chromadb==0.4.14
 echo
 streamlit
 PyPDF2
@@ -9,7 +12,5 @@ pyttsx3
 langchain-google-genai
 openai
 langchain-community
-chromadb==0.4.22
-duckdb
+duckdb>=0.8.0
 tiktoken>=0.5.1
-
