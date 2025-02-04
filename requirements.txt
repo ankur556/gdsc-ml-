@@ -2,8 +2,8 @@ streamlit
 openai
 chromadb
 python-docx
-pypdf2
-speechrecognition
+PyPDF2
+SpeechRecognition
 torch
 transformers
 sentence-transformers
