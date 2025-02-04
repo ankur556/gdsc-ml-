@@ -1,18 +1,22 @@
 import os
-os.system("pip install -r requirements.txt")
 import openai
 import chromadb
 import docx
 import PyPDF2
 import speech_recognition as sr
 import streamlit as st
-from openai import OpenAI
 from chromadb.utils import embedding_functions
 
 # --- Setup ---
-# Set OpenAI API Key
 st.title("💬 Document-Based Chatbot with Voice & Text")
 st.write("This chatbot can search and process documents, as well as take voice or text inputs.")
+
+# --- Set OpenAI API Key ---
+openai_api_key = st.text_input("OpenAI API Key", type="password")
+if not openai_api_key:
+    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
+else:
+    openai.api_key = openai_api_key  # Corrected OpenAI API handling
 
 # --- ChromaDB Setup ---
 client = chromadb.PersistentClient(path="Chromadb")
@@ -29,7 +33,8 @@ def read_pdf_file(file_path: str):
     with open(file_path, 'rb') as file:
         pdf_reader = PyPDF2.PdfReader(file)
         for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
+            page_text = page.extract_text() if page.extract_text() else ""
+            text += page_text + "\n"
     return text
 
 def read_docx_file(file_path: str):
@@ -59,10 +64,8 @@ def split_text(text: str, chunk_size: int = 500):
         sentence = sentence.strip()
         if not sentence:
             continue
-
         if not sentence.endswith('.'):
             sentence += '.'
-
         sentence_size = len(sentence)
 
         if current_size + sentence_size > chunk_size and current_chunk:
@@ -115,18 +118,22 @@ def process_and_add_documents(collection, folder_path: str):
 def semantic_search(collection, query: str, n_results: int = 2):
     results = collection.query(
         query_texts=[query],
-        n_results=n_results
+        n_results=n_results,
+        include=["documents", "metadatas"]  # Fixed missing include field
     )
     return results
 
 def get_context_with_sources(results):
+    if not results['documents']:
+        return "No relevant documents found.", []
+    
     context = "\n\n".join(results['documents'][0])
     sources = [f"{meta['source']} (chunk {meta['chunk']})" for meta in results['metadatas'][0]]
     return context, sources
 
 # --- OpenAI Response Generation ---
 def get_prompt(context: str, conversation_history: str, query: str):
-    prompt = f"""Based on the following context and conversation history, please provide a relevant and contextual response.
+    return f"""Based on the following context and conversation history, please provide a relevant and contextual response.
     If the answer cannot be derived from the context, only use the conversation history or say "I cannot answer this based on the provided information."
 
     Context from documents:
@@ -138,7 +145,6 @@ def get_prompt(context: str, conversation_history: str, query: str):
     Human: {query}
 
     Assistant:"""
-    return prompt
 
 def generate_response(query: str, context: str, conversation_history: str = ""):
     prompt = get_prompt(context, conversation_history, query)
@@ -150,16 +156,8 @@ def generate_response(query: str, context: str, conversation_history: str = ""):
     )
     return response['choices'][0]['message']['content']
 
-# --- Streamlit Interface ---
-# Check if OpenAI API Key is provided
-openai_api_key = st.text_input("OpenAI API Key", type="password")
-
-if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🗝️")
-else:
-    # Create an OpenAI client
-    client = OpenAI(api_key=openai_api_key)
-
+# --- Streamlit Chat Interface ---
+if openai_api_key:
     # Create a session state variable to store chat messages
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -169,9 +167,8 @@ else:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Create a chat input field to allow the user to enter a message
+    # Create a chat input field
     if prompt := st.chat_input("Type your message here..."):
-        # Store and display the current prompt
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -181,11 +178,11 @@ else:
         context, sources = get_context_with_sources(results)
         response = generate_response(prompt, context)
 
-        # Stream the response to the chat
+        # Stream response
         with st.chat_message("assistant"):
             st.markdown(response)
 
-        # Append the assistant's response to the session state
+        # Append response to session state
         st.session_state.messages.append({"role": "assistant", "content": response})
 
     # Add voice interaction
@@ -198,21 +195,17 @@ else:
                 voice_input = recognizer.recognize_google(audio)
                 st.write(f"You said: {voice_input}")
 
-                # Append the voice input to the session state
                 st.session_state.messages.append({"role": "user", "content": voice_input})
                 with st.chat_message("user"):
                     st.markdown(voice_input)
 
-                # Perform RAG query and generate a response
                 results = semantic_search(collection, voice_input)
                 context, sources = get_context_with_sources(results)
                 response = generate_response(voice_input, context)
 
-                # Stream the response to the chat
                 with st.chat_message("assistant"):
                     st.markdown(response)
 
-                # Append the assistant's response to the session state
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
             except sr.UnknownValueError:
