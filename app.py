@@ -20,6 +20,19 @@ import chromadb  # Import ChromaDB after cleanup
 client = chromadb.PersistentClient(path=chromadb_path)
 
 
+import subprocess
+
+def upgrade_sqlite():
+    try:
+        print("Upgrading SQLite to 3.35.0+...")
+        subprocess.run(["pip", "install", "--upgrade", "sqlite-utils"], check=True)
+        print("SQLite upgrade successful!")
+    except subprocess.CalledProcessError as e:
+        print(f"SQLite upgrade failed: {e}")
+
+upgrade_sqlite()
+
+
 # --- Setup ---
 st.title("💬 Document-Based Chatbot with Voice & Text")
 st.write("This chatbot can search and process documents, as well as take voice or text inputs.")
