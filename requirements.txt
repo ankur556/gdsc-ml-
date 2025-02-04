@@ -10,3 +10,7 @@ sentence-transformers
 rich
 markdown-it-py
 pygments
+uvicorn
+fastapi
+duckdb
+numpy
