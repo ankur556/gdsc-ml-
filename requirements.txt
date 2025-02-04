@@ -14,4 +14,4 @@ uvicorn
 fastapi
 duckdb
 numpy
-
+sqlite-utils
