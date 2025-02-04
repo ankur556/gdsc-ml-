@@ -1,7 +1,7 @@
 import os
 import openai
 import chromadb
-import docx
+from docx import Document
 import PyPDF2
 import speech_recognition as sr
 import streamlit as st
