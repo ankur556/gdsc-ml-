@@ -11,4 +11,7 @@ openai
 langchain-community
 openai
 chromadb
-
+duckdb
+sqlite
+pysqlite3
+tiktoken
