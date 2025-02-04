@@ -1,12 +1,12 @@
+streamlit
 openai
 chromadb
 docx
 pypdf2
 speechrecognition
-streamlit
 torch
 transformers
 sentence-transformers
-numpy
-tqdm
-pyaudio
+rich
+markdown-it-py
+pygments
