@@ -14,3 +14,4 @@ uvicorn
 fastapi
 duckdb
 numpy
+pysqlite3  # Instead of sqlite-utils
