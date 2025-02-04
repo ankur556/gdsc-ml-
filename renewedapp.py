@@ -1,27 +1,10 @@
 import os
 import shutil
 import openai
-import chromadb
 from docx import Document
 import PyPDF2
 import speech_recognition as sr
 import streamlit as st
-from chromadb.utils import embedding_functions
-
-import chromadb
-
-client = chromadb.Client()
-collection = client.get_collection(name="chroma_docs")
-results = collection.get(ids=["page"])["documents"]
-print(results) # Not found []
-
-chromadb_path = "Chromadb"
-
-if os.path.exists(chromadb_path):
-    shutil.rmtree(chromadb_path)  # Delete the folder
-
-# Recreate the persistent database
-client = chromadb.PersistentClient(path=chromadb_path)
 
 # --- Setup ---
 st.title("💬 Document-Based Chatbot with Voice & Text")
@@ -33,11 +16,6 @@ if not openai_api_key:
     st.info("Please add your OpenAI API key to continue.", icon="🔑")
 else:
     openai.api_key = openai_api_key
-
-# --- ChromaDB Setup ---
-client = chromadb.PersistentClient(path="Chromadb")
-sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
-collection = client.get_or_create_collection(name="documents_collection", embedding_function=sentence_transformer_ef)
 
 # --- Functions for Document Processing ---
 def read_text_file(file_path: str):
@@ -75,33 +53,43 @@ def process_document(file_path: str):
         chunks = [content[i:i+500] for i in range(0, len(content), 500)]
         file_name = os.path.basename(file_path)
         metadatas = [{"source": file_name, "chunk": i} for i in range(len(chunks))]
-        ids = [f"{file_name}_chunk_{i}" for i in range(len(chunks))]
-        return ids, chunks, metadatas
+        return chunks, metadatas
     except Exception as e:
         print(f"Error processing {file_path}: {str(e)}")
-        return [], [], []
+        return [], []
 
-def add_to_collection(collection, ids, texts, metadatas):
-    if texts:
-        collection.add(documents=texts, metadatas=metadatas, ids=ids)
+def process_and_add_documents(folder_path: str):
+    document_chunks = []
+    for file_path in os.listdir(folder_path):
+        full_path = os.path.join(folder_path, file_path)
+        if os.path.isfile(full_path):
+            chunks, metadatas = process_document(full_path)
+            document_chunks.append((chunks, metadatas))
+    return document_chunks
 
-def process_and_add_documents(collection, folder_path: str):
-    files = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, file))]
-    for file_path in files:
-        ids, texts, metadatas = process_document(file_path)
-        add_to_collection(collection, ids, texts, metadatas)
+# --- Simple In-Memory Search ---
+document_chunks = []
 
-# --- Semantic Search with RAG ---
-def semantic_search(collection, query: str, n_results: int = 2):
-    results = collection.query(query_texts=[query], n_results=n_results, include=["documents", "metadatas"])
-    return results
+def load_documents(folder_path: str):
+    global document_chunks
+    document_chunks = process_and_add_documents(folder_path)
+
+def simple_search(query: str, n_results: int = 2):
+    # A basic "search" based on keyword matches
+    results = []
+    for chunks, metadatas in document_chunks:
+        for i, chunk in enumerate(chunks):
+            if query.lower() in chunk.lower():
+                results.append((chunk, metadatas[i]))
+    
+    return results[:n_results]
 
 def get_context_with_sources(results):
-    if not results['documents']:
+    if not results:
         return "No relevant documents found.", []
     
-    context = "\n\n".join(results['documents'][0])
-    sources = [f"{meta['source']} (chunk {meta['chunk']})" for meta in results['metadatas'][0]]
+    context = "\n\n".join([result[0] for result in results])
+    sources = [f"{meta['source']} (chunk {meta['chunk']})" for result in results for meta in [result[1]]]
     return context, sources
 
 # --- OpenAI Response Generation ---
@@ -135,7 +123,7 @@ if openai_api_key:
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        results = semantic_search(collection, prompt)
+        results = simple_search(prompt)
         context, sources = get_context_with_sources(results)
         response = generate_response(prompt, context)
 
@@ -155,7 +143,7 @@ if openai_api_key:
                 st.session_state.messages.append({"role": "user", "content": voice_input})
                 with st.chat_message("user"):
                     st.markdown(voice_input)
-                results = semantic_search(collection, voice_input)
+                results = simple_search(voice_input)
                 context, sources = get_context_with_sources(results)
                 response = generate_response(voice_input, context)
                 with st.chat_message("assistant"):
