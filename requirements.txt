@@ -1,17 +1,6 @@
-streamlit
 openai
 chromadb
-python-docx
-pypdf2
+docx
+PyPDF2
 speechrecognition
-torch
-transformers
-sentence-transformers
-rich
-markdown-it-py
-pygments
-uvicorn
-fastapi
-duckdb
-numpy
-pysqlite3  # Instead of sqlite-utils
+streamlit
