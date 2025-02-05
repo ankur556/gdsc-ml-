@@ -7,13 +7,14 @@ import streamlit as st
 
 # --- Setup ---
 st.title("💬 Document-Based Chatbot with Voice & Text")
-st.write("This chatbot can search and process documents, as well as take voice or text inputs.")
+st.write("This chatbot can help you search and process documents, as well as take voice or text inputs.")
 
 # --- File Upload ---
 uploaded_files = st.file_uploader("Upload your documents", accept_multiple_files=True, type=["txt", "pdf", "docx"])
 
 document_chunks = []
 
+# Helper function to read different document formats
 def read_text_file(file):
     return file.read().decode("utf-8")
 
@@ -35,9 +36,9 @@ def read_document(file, file_extension):
         return read_pdf_file(file)
     elif file_extension == "docx":
         return read_docx_file(file)
-    else:
-        return ""
+    return ""
 
+# Helper function to split document into chunks
 def split_text(text, chunk_size=500):
     sentences = text.replace('\n', ' ').split('. ')
     chunks, current_chunk, current_size = [], [], 0
@@ -46,7 +47,8 @@ def split_text(text, chunk_size=500):
         sentence = sentence.strip()
         if not sentence:
             continue
-        if not sentence.endswith('.'): sentence += '.'
+        if not sentence.endswith('.'):
+            sentence += '.'
         sentence_size = len(sentence)
 
         if current_size + sentence_size > chunk_size and current_chunk:
@@ -69,17 +71,14 @@ if uploaded_files:
         content = read_document(file, file_extension)
         chunks = split_text(content)
         document_chunks.extend(chunks)
-    st.success(f"Uploaded {len(uploaded_files)} documents successfully!")
+    st.success(f"Successfully uploaded {len(uploaded_files)} document(s)!")
 
 # --- Simple Search ---
 def simple_search(query, n_results=2):
-    results = [chunk for chunk in document_chunks if query.lower() in chunk.lower()]
-    return results[:n_results]
+    return [chunk for chunk in document_chunks if query.lower() in chunk.lower()][:n_results]
 
 def get_context_with_sources(results):
-    if not results:
-        return "No relevant documents found."
-    return "\n\n".join(results)
+    return "\n\n".join(results) if results else "No relevant documents found."
 
 # --- OpenAI Response Generation ---
 def generate_response(query, context):
@@ -90,20 +89,8 @@ def generate_response(query, context):
     
     User: {query}
     Assistant:"""
-    
 
-client = openai.OpenAI()  # Initialize OpenAI client
-
-def generate_response(query, context):
-    prompt = f"""Based on the following context, provide a relevant response. If no relevant info is found, say so.
-    
-    Context:
-    {context}
-    
-    User: {query}
-    Assistant:"""
-
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
@@ -113,28 +100,32 @@ def generate_response(query, context):
         max_tokens=500
     )
 
-    return response.choices[0].message.content  # Extract and return response
-
-    return response['choices'][0]['message']['content']
+    return response["choices"][0]["message"]["content"]
 
 # --- Streamlit Chat Interface ---
-openai_api_key = st.text_input("OpenAI API Key", type="password")
+openai_api_key = st.text_input("Enter your OpenAI API Key", type="password")
+
 if not openai_api_key:
-    st.info("Please add your OpenAI API key to continue.", icon="🔑")
+    st.info("Please add your OpenAI API key to proceed.", icon="🔑")
 else:
-    openai.api_key = openai_api_key
+    openai.api_key = openai_api_key  # Set the API key
+
+    # Initialize session state if it doesn't exist
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
+    # Display previous messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
+    # User input
     if prompt := st.chat_input("Type your message here..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
+        # Process the input, search for relevant documents, and get the response
         results = simple_search(prompt)
         context = get_context_with_sources(results)
         response = generate_response(prompt, context)
@@ -142,8 +133,10 @@ else:
         with st.chat_message("assistant"):
             st.markdown(response)
 
+        # Store assistant's response
         st.session_state.messages.append({"role": "assistant", "content": response})
 
+    # Voice input
     if st.button("Speak"):
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
@@ -162,6 +155,6 @@ else:
                     st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             except sr.UnknownValueError:
-                st.write("Sorry, I could not understand your speech.")
+                st.write("Sorry, I couldn't understand your speech.")
             except sr.RequestError:
                 st.write("Sorry, there was an issue with the speech recognition service.")
