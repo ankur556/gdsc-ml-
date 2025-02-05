@@ -1,4 +1,5 @@
-streamlit
+streamlit==1.42.0
+pyaudio
 openai
 chromadb
 python-docx
@@ -15,4 +16,3 @@ fastapi
 duckdb
 numpy
 sqlite-utils
-pyaudio
