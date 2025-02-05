@@ -1,1 +1,14 @@
-
+streamlit
+openai
+langchain
+langchain-openai
+faiss-cpu
+python-docx
+PyPDF2
+SpeechRecognition
+torch
+transformers
+sentence-transformers
+sounddevice
+wavio
+numpy
