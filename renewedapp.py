@@ -90,12 +90,31 @@ def generate_response(query, context):
     
     User: {query}
     Assistant:"""
-    response = openai.ChatCompletion.create(
+    
+
+client = openai.OpenAI()  # Initialize OpenAI client
+
+def generate_response(query, context):
+    prompt = f"""Based on the following context, provide a relevant response. If no relevant info is found, say so.
+    
+    Context:
+    {context}
+    
+    User: {query}
+    Assistant:"""
+
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": prompt}],
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
         temperature=0,
         max_tokens=500
     )
+
+    return response.choices[0].message.content  # Extract and return response
+
     return response['choices'][0]['message']['content']
 
 # --- Streamlit Chat Interface ---
