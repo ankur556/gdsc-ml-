@@ -92,10 +92,8 @@ def generate_response(query, context):
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ],
+        messages=[{"role": "system", "content": "You are a helpful assistant."},
+                  {"role": "user", "content": prompt}],
         temperature=0,
         max_tokens=500
     )
@@ -136,25 +134,35 @@ else:
         # Store assistant's response
         st.session_state.messages.append({"role": "assistant", "content": response})
 
-    # Voice input
-    if st.button("Speak"):
+    # Upload and process audio files for speech-to-text
+    audio_file = st.file_uploader("Upload an audio file", type=["wav", "mp3"])
+    
+    if audio_file:
         recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            st.write("Listening... Please speak.")
-            audio = recognizer.listen(source)
-            try:
-                voice_input = recognizer.recognize_google(audio)
+        audio = sr.AudioFile(audio_file)
+        
+        try:
+            with audio as source:
+                st.write("Processing audio... Please wait.")
+                audio_data = recognizer.record(source)
+                voice_input = recognizer.recognize_google(audio_data)
                 st.write(f"You said: {voice_input}")
+
+                # Process the voice input, search for relevant documents, and get the response
                 st.session_state.messages.append({"role": "user", "content": voice_input})
                 with st.chat_message("user"):
                     st.markdown(voice_input)
+
                 results = simple_search(voice_input)
                 context = get_context_with_sources(results)
                 response = generate_response(voice_input, context)
+
                 with st.chat_message("assistant"):
                     st.markdown(response)
+
                 st.session_state.messages.append({"role": "assistant", "content": response})
-            except sr.UnknownValueError:
-                st.write("Sorry, I couldn't understand your speech.")
-            except sr.RequestError:
-                st.write("Sorry, there was an issue with the speech recognition service.")
+
+        except sr.UnknownValueError:
+            st.write("Sorry, I couldn't understand your speech. Please try again.")
+        except sr.RequestError as e:
+            st.write(f"Error with the speech recognition service: {e}")
