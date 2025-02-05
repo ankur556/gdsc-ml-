@@ -15,3 +15,4 @@ fastapi
 duckdb
 numpy
 sqlite-utils
+pyaudio
