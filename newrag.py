@@ -1,4 +1,5 @@
 import os
+os.system("pip install -r requirements1.txt")
 import openai
 import sounddevice as sd
 import wavio
