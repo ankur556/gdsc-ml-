@@ -2,7 +2,7 @@ import os
 os.system("pip install -r requirements1.txt")
 
 import streamlit as st
-import openai
+from openai import OpenAI
 import docx
 import PyPDF2
 
@@ -82,7 +82,7 @@ def get_context_with_sources(results):
     return "\n\n".join(results) if results else "No relevant documents found."
 
 # --- OpenAI Response Generation ---
-def generate_response(query, context):
+def generate_response(client, query, context):
     prompt = f"""Based on the following context, provide a relevant response. If no relevant info is found, say so.
     
     Context:
@@ -91,7 +91,7 @@ def generate_response(query, context):
     User: {query}
     Assistant:"""
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
@@ -101,7 +101,7 @@ def generate_response(query, context):
         max_tokens=500
     )
 
-    return response["choices"][0]["message"]["content"]
+    return response.choices[0].message.content
 
 # --- Streamlit Chat Interface ---
 openai_api_key = st.text_input("Enter your OpenAI API Key", type="password")
@@ -109,30 +109,36 @@ openai_api_key = st.text_input("Enter your OpenAI API Key", type="password")
 if not openai_api_key:
     st.info("Please add your OpenAI API key to proceed.", icon="🔑")
 else:
-    openai.api_key = openai_api_key  # Set the API key
+    try:
+        client = OpenAI(api_key=openai_api_key)
+        # Test the API key with a simple request
+        client.models.list()
 
-    # Initialize session state if it doesn't exist
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+        # Initialize session state if it doesn't exist
+        if "messages" not in st.session_state:
+            st.session_state.messages = []
 
-    # Display previous messages
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+        # Display previous messages
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-    # User input
-    if prompt := st.chat_input("Type your message here..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        # User input
+        if prompt := st.chat_input("Type your message here..."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-        # Process the input, search for relevant documents, and get the response
-        results = simple_search(prompt)
-        context = get_context_with_sources(results)
-        response = generate_response(prompt, context)
+            # Process the input, search for relevant documents, and get the response
+            results = simple_search(prompt)
+            context = get_context_with_sources(results)
+            response = generate_response(client, prompt, context)
 
-        with st.chat_message("assistant"):
-            st.markdown(response)
+            with st.chat_message("assistant"):
+                st.markdown(response)
 
-        # Store assistant's response
-        st.session_state.messages.append({"role": "assistant", "content": response})
+            # Store assistant's response
+            st.session_state.messages.append({"role": "assistant", "content": response})
+
+    except Exception as e:
+        st.error(f"Error with OpenAI API key: {str(e)}")
