@@ -1,7 +1,7 @@
 import os
 os.system("pip install --upgrade pip")
 os.system("pip install -r requirements1.txt")
-
+os.system("apt-get install portaudio19-dev python3-pyaudio")
 import openai
 import docx
 import PyPDF2
