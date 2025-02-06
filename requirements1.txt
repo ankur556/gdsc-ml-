@@ -1,10 +1,8 @@
-
-nginx
-openai
 streamlit
-docx
+openai
+python-docx
 PyPDF2
-speechrecognition
-sounddevice
 numpy
 soundfile
+sounddevice
+SpeechRecognition
