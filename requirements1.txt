@@ -12,3 +12,4 @@ sentence-transformers
 sounddevice
 wavio
 numpy
+pyaudio
