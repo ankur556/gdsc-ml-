@@ -1,19 +1,16 @@
 import os
 os.system("pip install --upgrade pip")
 os.system("pip install -r requirements1.txt")
-if os.path.exists("pyaudio.whl"):
-    os.system("pip install pyaudio.whl")
-else:
-    print("Error: pyaudio.whl not found! Please download the correct file.")
 
 import openai
-
 import docx
 import PyPDF2
 import speech_recognition as sr
 import sounddevice as sd
 import numpy as np
 import streamlit as st
+import io
+import soundfile as sf
 
 # --- Setup ---
 st.title("💬 Document-Based Chatbot with Voice & Text")
@@ -149,14 +146,20 @@ else:
     # Voice input (Using sounddevice instead of PyAudio)
     def record_audio(duration=5, sample_rate=44100):
         st.write("Listening...")
-        audio = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype=np.int16)
-        sd.wait()  # Wait for recording to complete
-        return np.squeeze(audio)
+        audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype=np.int16)
+        sd.wait()  # Wait until recording is finished
+    
+        # Convert NumPy array to WAV format
+        wav_io = io.BytesIO()
+        sf.write(wav_io, audio_data, sample_rate, format="WAV")
+        wav_io.seek(0)  # Rewind the file
+
+        return wav_io  # Return as file-like object
 
     if st.button("Speak"):
+        audio_file = record_audio()
         recognizer = sr.Recognizer()
-        audio_data = record_audio()
-        with sr.AudioFile(audio_data) as source:
+        with sr.AudioFile(audio_file) as source:
             audio = recognizer.record(source)
             try:
                 voice_input = recognizer.recognize_google(audio)
