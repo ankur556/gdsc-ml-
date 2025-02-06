@@ -4,3 +4,4 @@ streamlit
 openai
 python-docx
 PyPDF2
+numpy
