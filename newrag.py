@@ -1,4 +1,5 @@
 import os
+os.system("pip install pyaudio.whl")
 os.system("pip install --upgrade pip")
 os.system("pip install -r requirements1.txt")
 import openai
