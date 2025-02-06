@@ -12,6 +12,27 @@ st.write("This chatbot can help you search and process documents.")
 
 # --- File Upload ---
 uploaded_files = st.file_uploader("Upload your documents", accept_multiple_files=True, type=["txt", "pdf", "docx"])
+if st.button("Speak"):
+    audio_file = record_audio()
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(audio_file) as source:
+        audio = recognizer.record(source)
+        try:
+            voice_input = recognizer.recognize_google(audio)
+            st.write(f"You said: {voice_input}")
+            st.session_state.messages.append({"role": "user", "content": voice_input})
+            with st.chat_message("user"):
+                st.markdown(voice_input)
+            results = simple_search(voice_input)
+            context = get_context_with_sources(results)
+            response = generate_response(client, voice_input, context)
+            with st.chat_message("assistant"):
+                st.markdown(response)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+        except sr.UnknownValueError:
+            st.write("Sorry, I couldn't understand your speech.")
+        except sr.RequestError:
+            st.write("Sorry, there was an issue with the speech recognition service.")
 
 document_chunks = []
 
@@ -142,3 +163,5 @@ else:
 
     except Exception as e:
         st.error(f"Error with OpenAI API key: {str(e)}")
+
+
