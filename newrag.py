@@ -1,5 +1,7 @@
 import os
+os.system("pip install --upgrade pip")
 os.system("pip install -r requirements1.txt")
+
 
 import streamlit as st
 from openai import OpenAI
