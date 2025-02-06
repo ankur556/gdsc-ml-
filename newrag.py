@@ -1,8 +1,13 @@
 import os
-os.system("pip install pyaudio.whl")
 os.system("pip install --upgrade pip")
+if os.path.exists("pyaudio.whl"):
+    os.system("pip install pyaudio.whl")
+else:
+    print("Error: pyaudio.whl not found! Please download the correct file.")
 os.system("pip install -r requirements1.txt")
+
 import openai
+
 import docx
 import PyPDF2
 import speech_recognition as sr
