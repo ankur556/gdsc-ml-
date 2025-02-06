@@ -1,3 +1,6 @@
+import os
+os.system("pip install -r requirements1.txt")
+
 import streamlit as st
 import openai
 import docx
