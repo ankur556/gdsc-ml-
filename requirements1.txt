@@ -1,7 +1,8 @@
-sounddevice
-soundfile
 streamlit
 openai
 python-docx
 PyPDF2
 numpy
+sounddevice
+soundfile
+SpeechRecognition
