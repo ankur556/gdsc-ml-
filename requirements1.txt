@@ -6,3 +6,4 @@ numpy
 sounddevice
 soundfile
 SpeechRecognition
+sounddevice
