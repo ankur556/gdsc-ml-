@@ -1,16 +1,16 @@
 import os
 os.system("pip install --upgrade pip")
 os.system("pip install -r requirements1.txt")
-os.system("apt-get install portaudio19-dev python3-pyaudio")
+
+import streamlit as st
 import openai
 import docx
 import PyPDF2
-import speech_recognition as sr
-import sounddevice as sd
 import numpy as np
-import streamlit as st
 import io
 import soundfile as sf
+import sounddevice as sd
+import speech_recognition as sr
 
 # --- Setup ---
 st.title("💬 Document-Based Chatbot with Voice & Text")
@@ -143,7 +143,7 @@ else:
         # Store assistant's response
         st.session_state.messages.append({"role": "assistant", "content": response})
 
-    # Voice input (Using sounddevice instead of PyAudio)
+    # Voice input
     def record_audio(duration=5, sample_rate=44100):
         st.write("Listening...")
         audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype=np.int16)
