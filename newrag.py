@@ -5,6 +5,8 @@ import openai
 import docx
 import PyPDF2
 import speech_recognition as sr
+import sounddevice as sd
+import numpy as np
 import streamlit as st
 
 # --- Setup ---
@@ -94,8 +96,10 @@ def generate_response(query, context):
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=[{"role": "system", "content": "You are a helpful assistant."},
-                  {"role": "user", "content": prompt}],
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
         temperature=0,
         max_tokens=500
     )
@@ -136,35 +140,31 @@ else:
         # Store assistant's response
         st.session_state.messages.append({"role": "assistant", "content": response})
 
-    # Upload and process audio files for speech-to-text
-    audio_file = st.file_uploader("Upload an audio file", type=["wav", "mp3"])
-    
-    if audio_file:
-        recognizer = sr.Recognizer()
-        audio = sr.AudioFile(audio_file)
-        
-        try:
-            with audio as source:
-                st.write("Processing audio... Please wait.")
-                audio_data = recognizer.record(source)
-                voice_input = recognizer.recognize_google(audio_data)
-                st.write(f"You said: {voice_input}")
+    # Voice input (Using sounddevice instead of PyAudio)
+    def record_audio(duration=5, sample_rate=44100):
+        st.write("Listening...")
+        audio = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype=np.int16)
+        sd.wait()  # Wait for recording to complete
+        return np.squeeze(audio)
 
-                # Process the voice input, search for relevant documents, and get the response
+    if st.button("Speak"):
+        recognizer = sr.Recognizer()
+        audio_data = record_audio()
+        with sr.AudioFile(audio_data) as source:
+            audio = recognizer.record(source)
+            try:
+                voice_input = recognizer.recognize_google(audio)
+                st.write(f"You said: {voice_input}")
                 st.session_state.messages.append({"role": "user", "content": voice_input})
                 with st.chat_message("user"):
                     st.markdown(voice_input)
-
                 results = simple_search(voice_input)
                 context = get_context_with_sources(results)
                 response = generate_response(voice_input, context)
-
                 with st.chat_message("assistant"):
                     st.markdown(response)
-
                 st.session_state.messages.append({"role": "assistant", "content": response})
-
-        except sr.UnknownValueError:
-            st.write("Sorry, I couldn't understand your speech. Please try again.")
-        except sr.RequestError as e:
-            st.write(f"Error with the speech recognition service: {e}")
+            except sr.UnknownValueError:
+                st.write("Sorry, I couldn't understand your speech.")
+            except sr.RequestError:
+                st.write("Sorry, there was an issue with the speech recognition service.")
