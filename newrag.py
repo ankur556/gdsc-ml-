@@ -5,6 +5,21 @@ import streamlit as st
 from openai import OpenAI
 import docx
 import PyPDF2
+import sounddevice as sd
+import numpy as np
+import io
+import soundfile as sf
+
+def record_audio(duration=5, sample_rate=44100):
+    st.write("Listening...")
+    audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype=np.int16)
+    sd.wait()
+    
+    wav_io = io.BytesIO()
+    sf.write(wav_io, audio_data, sample_rate, format="WAV")
+    wav_io.seek(0)
+    
+    return wav_io
 
 # --- Setup ---
 st.title("💬 Document-Based Chatbot")
