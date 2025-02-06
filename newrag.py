@@ -1,20 +1,11 @@
-import os
-os.system("pip install --upgrade pip")
-os.system("pip install -r requirements1.txt")
-
 import streamlit as st
 import openai
 import docx
 import PyPDF2
-import numpy as np
-import io
-import soundfile as sf
-import sounddevice as sd
-import speech_recognition as sr
 
 # --- Setup ---
-st.title("💬 Document-Based Chatbot with Voice & Text")
-st.write("This chatbot can help you search and process documents, as well as take voice or text inputs.")
+st.title("💬 Document-Based Chatbot")
+st.write("This chatbot can help you search and process documents.")
 
 # --- File Upload ---
 uploaded_files = st.file_uploader("Upload your documents", accept_multiple_files=True, type=["txt", "pdf", "docx"])
@@ -142,38 +133,3 @@ else:
 
         # Store assistant's response
         st.session_state.messages.append({"role": "assistant", "content": response})
-
-    # Voice input
-    def record_audio(duration=5, sample_rate=44100):
-        st.write("Listening...")
-        audio_data = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype=np.int16)
-        sd.wait()  # Wait until recording is finished
-    
-        # Convert NumPy array to WAV format
-        wav_io = io.BytesIO()
-        sf.write(wav_io, audio_data, sample_rate, format="WAV")
-        wav_io.seek(0)  # Rewind the file
-
-        return wav_io  # Return as file-like object
-
-    if st.button("Speak"):
-        audio_file = record_audio()
-        recognizer = sr.Recognizer()
-        with sr.AudioFile(audio_file) as source:
-            audio = recognizer.record(source)
-            try:
-                voice_input = recognizer.recognize_google(audio)
-                st.write(f"You said: {voice_input}")
-                st.session_state.messages.append({"role": "user", "content": voice_input})
-                with st.chat_message("user"):
-                    st.markdown(voice_input)
-                results = simple_search(voice_input)
-                context = get_context_with_sources(results)
-                response = generate_response(voice_input, context)
-                with st.chat_message("assistant"):
-                    st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
-            except sr.UnknownValueError:
-                st.write("Sorry, I couldn't understand your speech.")
-            except sr.RequestError:
-                st.write("Sorry, there was an issue with the speech recognition service.")
