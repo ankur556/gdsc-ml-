@@ -1,5 +1,5 @@
-streamlit
-openai
-docx
-pypdf2
-speechrecognition
+streamlit>=1.20.0
+openai>=1.0.0
+python-docx>=0.8.11
+pypdf2>=3.0.0
+speechrecognition>=3.8.1
