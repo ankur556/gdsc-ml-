@@ -1,5 +1,5 @@
 import os
-os.system("pip install -r requirements.txt")
+os.system("pip install -r requirements3.txt")
 import openai
 import docx
 import PyPDF2
